@@ -7,7 +7,7 @@ var chainnetConfig = {
     },
     testnet: {
         name: "测试网",
-        contractAddress: "n1gG52zgBDichY1rqQYSzK4WBseiremYQXA",
+        contractAddress: "n1xTfzwdkyrAZzUQchGjwVtRwSpuYM8JKpM",
         host: "https://testnet.nebulas.io",
         payhost: "https://pay.nebulas.io/api/pay"
     },
