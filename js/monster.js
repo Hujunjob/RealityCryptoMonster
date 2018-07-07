@@ -75,3 +75,21 @@ function getAll(){
         console.log("getAllMonster "+res);
     });
 }
+
+function adopt(){
+    uploadToWallet("adoptMonster",JSON.stringify([monsterId]),0,function(suc,res){
+        console.log("adoptMonster:"+suc+",res="+res);
+    });
+}
+
+var monsters = new Array();
+monsters[0] = "hello";
+monsters[1] = "hello2";
+
+monsters.forEach(element => {
+    console.log("monsters =" + element);
+    if(element === "hello"){
+        console.log("nihao");
+        return;
+    }
+});

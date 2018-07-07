@@ -2,6 +2,7 @@
 
 const KILL_FAIL = 0;
 const KILL_SUC = 1;
+const ADOPT_RATIO = 0.5;
 
 var User = function(text){
     if(text){
@@ -27,11 +28,14 @@ User.prototype = {
         this.monsters[this.monsters.length] = monsterId;
     },
     visit:function(monsterId){
+        var has = false;
         this.repository.forEach(element => {
             if(monsterId === element){
+                has =  true;
                 return;
             }
         });
+        if(!has)
         this.repository[this.repository.length] = monsterId;
     },
     kill:function(monsterId,result){
@@ -95,13 +99,20 @@ Operator.prototype = {
         if(this.num == 0){
             return -1;
         }
+        if(this.blood == 0){
+            return -2;
+        }
         //random kill
         var random = Math.random();
         if(random>0.5){
             return KILL_FAIL;
         }else{
-            this.num = this.num - 1;
+            // this.num = this.num - 1;
             this.killers[this.killers.length] = killer;
+            this.blood = this.blood - 1;
+            if(this.blood==0){
+                this.num = this.num - 1;
+            }
             return KILL_SUC;
         }
     }
@@ -317,6 +328,22 @@ StandardToken.prototype = {
         user.add(hash);
         this.users.put(from,user);
     },
+    adoptMonster:function(monsterId){
+        var from = Blockchain.transaction.from;
+        var user = this.users.get(from) || new User();
+        this._checkMonster(monsterId);
+
+        var random = Math.random();
+        var res = 0;
+        if(random<ADOPT_RATIO){
+            res = 1;
+            user.add(monsterId);
+        }
+
+        user.visit(monsterId);
+        this.users.put(from,user);
+        return res;
+    },
     killMonster:function(monsterId){
         var from = Blockchain.transaction.from;
         var user = this.users.get(from) || new User();
@@ -327,7 +354,7 @@ StandardToken.prototype = {
         }
 
         user.visit(monsterId);
-        this.users.put(from,user);
+        
 
         var res = monster.kill(from);
         //-1:error , 1 :success , 0: fail
@@ -336,12 +363,15 @@ StandardToken.prototype = {
             return -1;
         }else if(res == KILL_FAIL){
             // return "战斗失败，你啥都没得到";
+            user.kill(monsterId,res);
+            this.users.put(from,user);
             return 0;
         }
 
         this._transferByAdmin(from,monster.price.times(1-this._ratioAdmin-this._ratioCreator));
         this._transferByAdmin(monster.creator,monster.price.times(this._ratioCreator));
-
+        user.kill(monsterId,res);
+        this.users.put(from,user);
         // return "战斗成功，你获得了"+monster.price+"奖励";
         return 1;
     },
@@ -383,6 +413,12 @@ StandardToken.prototype = {
         var from = Blockchain.transaction.from;
         if(!(from === this._admin)){
             this._throw("This operation is not permitted");
+        }
+    },
+    _checkMonster:function(id){
+        var monster = this.monsters.get(id);
+        if(!monster){
+            this._throw("This monster is not exist");
         }
     },
     _throw:function(error){
